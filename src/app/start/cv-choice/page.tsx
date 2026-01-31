@@ -35,7 +35,7 @@ export default function CVChoicePage() {
   return (
     <OnboardingLayout
       step={4}
-      totalSteps={8}
+      totalSteps={13}
       title="Ai un CV?"
       subtitle="Putem să extragem datele sau să-l generăm pentru tine"
       backHref="/start/level"

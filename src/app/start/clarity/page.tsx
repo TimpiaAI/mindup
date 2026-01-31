@@ -34,8 +34,8 @@ export default function ClarityPage() {
 
   return (
     <OnboardingLayout
-      step={7}
-      totalSteps={8}
+      step={11}
+      totalSteps={13}
       title="Când simți că ești cel mai bun?"
       subtitle="Ce activitate îți dă cel mai mult sens și claritate?"
       backHref="/start/free-time"

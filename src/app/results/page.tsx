@@ -43,13 +43,13 @@ export default function ResultsPage() {
                 >
                   <Card hoverable className="h-full">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center gap-2">
-                        <Icon name={category.icon} size={24} className="text-[#2563EB]" />
+                      <div className="flex items-center gap-3">
+                        <Icon name={category.icon} size={28} className="text-[#2563EB]" />
                         <h3 className="text-lg font-semibold text-[#0F172A]">
                           {category.name}
                         </h3>
                       </div>
-                      <MatchBadge percentage={category.match} />
+                      <MatchBadge percentage={category.match} size="lg" />
                     </div>
 
                     <div className="mb-4">

@@ -60,7 +60,7 @@ export default function JobDetailPage({ params }: { params: Promise<{ jobId: str
                         <Icon name={category.icon} size={14} /> {category.name}
                       </Link>
                     </div>
-                    <MatchBadge percentage={job.match} className="text-lg" />
+                    <MatchBadge percentage={job.match} size="lg" />
                   </div>
 
                   <p className="text-[#334155] mb-4">{job.description}</p>

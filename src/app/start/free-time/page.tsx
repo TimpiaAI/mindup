@@ -28,11 +28,11 @@ export default function FreeTimePage() {
 
   return (
     <OnboardingLayout
-      step={6}
-      totalSteps={8}
+      step={10}
+      totalSteps={13}
       title="Ce faci în timpul liber?"
       subtitle="Spune-ne ce îți place să faci când ai timp liber"
-      backHref="/start/passions"
+      backHref="/start/languages"
       canContinue={canContinue}
       onNext={handleNext}
     >

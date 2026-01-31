@@ -43,7 +43,7 @@ export default function LevelPage() {
   return (
     <OnboardingLayout
       step={3}
-      totalSteps={8}
+      totalSteps={13}
       title="Ce faci acum?"
       subtitle="Selectează situația ta actuală"
       backHref="/start/location"

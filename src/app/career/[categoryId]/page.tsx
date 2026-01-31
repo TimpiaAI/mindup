@@ -56,13 +56,13 @@ export default function CareerCategoryPage({ params }: { params: Promise<{ categ
                 <Link href={`/job/${job.id}`}>
                   <Card hoverable>
                     <div className="flex items-start justify-between mb-3">
-                      <div className="flex items-center gap-2">
-                        <Icon name={job.icon} size={20} className="text-[#2563EB]" />
+                      <div className="flex items-center gap-3">
+                        <Icon name={job.icon} size={24} className="text-[#2563EB]" />
                         <h3 className="text-lg font-semibold text-[#0F172A]">
                           {job.name}
                         </h3>
                       </div>
-                      <MatchBadge percentage={job.match} />
+                      <MatchBadge percentage={job.match} size="md" />
                     </div>
 
                     <p className="text-sm text-[#64748B] mb-4">

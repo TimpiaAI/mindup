@@ -31,7 +31,7 @@ export default function PassionsPage() {
   };
 
   const handleNext = () => {
-    router.push('/start/free-time');
+    router.push('/start/experiences');
   };
 
   const canContinue = selected.length >= 1;
@@ -39,7 +39,7 @@ export default function PassionsPage() {
   return (
     <OnboardingLayout
       step={5}
-      totalSteps={8}
+      totalSteps={13}
       title="Ce te pasionează?"
       subtitle="Selectează ce îți place să faci (minim 1)"
       backHref="/start/cv-choice"

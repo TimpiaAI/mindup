@@ -106,7 +106,7 @@ export default function CertificatesPage() {
   return (
     <OnboardingLayout
       step={7}
-      totalSteps={12}
+      totalSteps={13}
       title="Certificate și Diplome"
       subtitle="Adaugă certificările și diplomele tale - poți încărca și imagini"
       backHref="/start/experiences"

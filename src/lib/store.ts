@@ -10,6 +10,7 @@ interface UserData {
   faculty?: string;
   year?: number;
   hasCV: boolean;
+  profilePhoto?: string;
 }
 
 interface Skill {
@@ -28,9 +29,29 @@ interface Experience {
   type: string;
   title: string;
   organization: string;
-  year: string;
+  startYear: string;
+  endYear: string;
+  current: boolean;
   description: string;
   skills: string[];
+}
+
+interface Certificate {
+  id: string;
+  title: string;
+  issuer: string;
+  date: string;
+  credentialId?: string;
+  credentialUrl?: string;
+  imagePreview?: string;
+}
+
+interface Project {
+  id: string;
+  type: string;
+  title: string;
+  url: string;
+  description?: string;
 }
 
 interface ProfileData {
@@ -40,6 +61,8 @@ interface ProfileData {
   skills: Skill[];
   languages: Language[];
   experiences: Experience[];
+  certificates: Certificate[];
+  projects: Project[];
 }
 
 interface CareerCategory {
@@ -99,10 +122,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     clarityTrigger: '',
     skills: [],
     languages: [],
-    experiences: []
+    experiences: [],
+    certificates: [],
+    projects: []
   },
   currentStep: 1,
-  totalSteps: 8,
+  totalSteps: 13,
   visibleCategories: CAREER_CATEGORIES.slice(0, 4),
   dismissedCategories: [],
   chatMessages: {},
@@ -151,7 +176,9 @@ export const useAppStore = create<AppState>((set, get) => ({
       clarityTrigger: '',
       skills: [],
       languages: [],
-      experiences: []
+      experiences: [],
+      certificates: [],
+      projects: []
     },
     currentStep: 1,
     visibleCategories: CAREER_CATEGORIES.slice(0, 4),
@@ -161,8 +188,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   loadMockData: () => set({
     user: MOCK_USER,
-    profile: MOCK_PROFILE,
-    currentStep: 8,
+    profile: { ...MOCK_PROFILE, certificates: [], projects: [] },
+    currentStep: 12,
     visibleCategories: CAREER_CATEGORIES.slice(0, 4),
     dismissedCategories: [],
     chatMessages: {}

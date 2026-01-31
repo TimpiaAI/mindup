@@ -32,7 +32,7 @@ export default function NamePage() {
   return (
     <OnboardingLayout
       step={1}
-      totalSteps={8}
+      totalSteps={13}
       title="Cum te numești?"
       subtitle="Hai să ne cunoaștem"
       backHref="/"

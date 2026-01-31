@@ -127,7 +127,7 @@ export default function ExperiencesPage() {
   return (
     <OnboardingLayout
       step={6}
-      totalSteps={12}
+      totalSteps={13}
       title="Experiențele tale"
       subtitle="Adaugă experiențele relevante - joburi, proiecte, cursuri, voluntariat"
       backHref="/start/passions"
