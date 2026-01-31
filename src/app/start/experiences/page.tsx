@@ -1,13 +1,12 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Briefcase, GraduationCap, Code, Trophy, Heart, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, X, Briefcase, GraduationCap, Code, Trophy, Heart, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { OnboardingLayout } from '@/components/onboarding';
-import { Button, Card, Badge, Icon } from '@/components/ui';
+import { Button, Card, Badge } from '@/components/ui';
 import { useAppStore } from '@/lib/store';
-import { MOCK_PROFILE } from '@/lib/mock-data';
 import { cn, generateId } from '@/lib/utils';
 
 interface Experience {
@@ -36,13 +35,26 @@ const suggestedSkills = [
   'Project Management', 'Design', 'Marketing', 'Data Analysis'
 ];
 
+// Demo data for auto-fill animation
+const demoExperience = {
+  type: 'project' as const,
+  title: 'Frontend Developer Intern',
+  organization: 'TechStart Solutions',
+  startYear: '2023',
+  endYear: '2024',
+  current: true,
+  description: 'Am dezvoltat interfețe web moderne folosind React și TypeScript. Am colaborat cu echipa de design pentru implementarea UI/UX.',
+  skills: ['React', 'TypeScript', 'Teamwork', 'Problem Solving']
+};
+
 export default function ExperiencesPage() {
   const router = useRouter();
   const { profile, setProfile } = useAppStore();
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [autoFillStep, setAutoFillStep] = useState(0);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Experience>>({
@@ -56,18 +68,74 @@ export default function ExperiencesPage() {
     skills: []
   });
 
-  // Pre-fill with mock data for demo
-  useEffect(() => {
-    if (experiences.length === 0 && MOCK_PROFILE.experiences) {
-      const mockExperiences = MOCK_PROFILE.experiences.map(exp => ({
-        ...exp,
-        startYear: exp.year.split('-')[0] || exp.year,
-        endYear: exp.year.split('-')[1] || exp.year,
-        current: exp.year.includes('Prezent') || exp.year.includes('2024')
-      }));
-      setExperiences(mockExperiences as Experience[]);
+  // Typewriter effect for input
+  const typeText = async (text: string, setter: (val: string) => void, delay = 30) => {
+    for (let i = 0; i <= text.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      setter(text.slice(0, i));
     }
-  }, []);
+  };
+
+  // Auto-fill animation
+  const startAutoFill = async () => {
+    setIsAutoFilling(true);
+
+    // Step 1: Select type
+    setAutoFillStep(1);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setFormData(prev => ({ ...prev, type: demoExperience.type }));
+
+    // Step 2: Type title
+    setAutoFillStep(2);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await typeText(demoExperience.title, (val) => setFormData(prev => ({ ...prev, title: val })));
+
+    // Step 3: Type organization
+    setAutoFillStep(3);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await typeText(demoExperience.organization, (val) => setFormData(prev => ({ ...prev, organization: val })));
+
+    // Step 4: Select years
+    setAutoFillStep(4);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setFormData(prev => ({ ...prev, startYear: demoExperience.startYear, current: demoExperience.current }));
+
+    // Step 5: Type description
+    setAutoFillStep(5);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    await typeText(demoExperience.description, (val) => setFormData(prev => ({ ...prev, description: val })), 15);
+
+    // Step 6: Select skills one by one
+    setAutoFillStep(6);
+    for (const skill of demoExperience.skills) {
+      await new Promise(resolve => setTimeout(resolve, 200));
+      setFormData(prev => ({ ...prev, skills: [...(prev.skills || []), skill] }));
+    }
+
+    setAutoFillStep(7);
+    setIsAutoFilling(false);
+  };
+
+  const handleOpenForm = () => {
+    setShowAddForm(true);
+    // Reset form
+    setFormData({
+      type: 'project',
+      title: '',
+      organization: '',
+      startYear: '2024',
+      endYear: '2024',
+      current: false,
+      description: '',
+      skills: []
+    });
+    setAutoFillStep(0);
+
+    // Auto-start demo after a short delay
+    setTimeout(() => {
+      startAutoFill();
+    }, 500);
+  };
 
   const handleAddExperience = () => {
     if (!formData.title || !formData.type) return;
@@ -222,65 +290,134 @@ export default function ExperiencesPage() {
             exit={{ opacity: 0, y: -20 }}
           >
             <Card className="border-[#2563EB] border-2">
-              <h3 className="font-medium text-[#0F172A] mb-4">Adaugă experiență nouă</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-medium text-[#0F172A]">Adaugă experiență nouă</h3>
+                {isAutoFilling && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F0FDF4] text-[#16A34A] text-xs font-medium rounded-full"
+                  >
+                    <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}>
+                      <Sparkles size={14} />
+                    </motion.div>
+                    Se completează automat...
+                  </motion.div>
+                )}
+                {!isAutoFilling && autoFillStep > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-[#F0FDF4] text-[#16A34A] text-xs font-medium rounded-full"
+                  >
+                    <Sparkles size={14} />
+                    Demo completat!
+                  </motion.div>
+                )}
+              </div>
 
               {/* Type selector */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  scale: autoFillStep === 1 ? [1, 1.02, 1] : 1,
+                  backgroundColor: autoFillStep === 1 ? ['transparent', '#EFF6FF', 'transparent'] : 'transparent'
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Tip experiență</label>
                 <div className="flex flex-wrap gap-2">
                   {experienceTypes.map(type => {
                     const TypeIcon = type.icon;
                     return (
-                      <button
+                      <motion.button
                         key={type.id}
-                        onClick={() => setFormData({ ...formData, type: type.id as Experience['type'] })}
+                        onClick={() => !isAutoFilling && setFormData({ ...formData, type: type.id as Experience['type'] })}
+                        disabled={isAutoFilling}
+                        animate={{
+                          scale: autoFillStep === 1 && formData.type === type.id ? [1, 1.1, 1] : 1
+                        }}
                         className={cn(
                           'flex items-center gap-2 px-3 py-2 rounded-[4px] text-sm transition-colors',
                           formData.type === type.id
                             ? `${type.color} text-white`
-                            : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
+                            : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]',
+                          isAutoFilling && 'cursor-not-allowed'
                         )}
                       >
                         <TypeIcon size={16} />
                         {type.label}
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Title */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  scale: autoFillStep === 2 ? [1, 1.02, 1] : 1,
+                  backgroundColor: autoFillStep === 2 ? ['transparent', '#EFF6FF', 'transparent'] : 'transparent'
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Titlu / Rol *</label>
                 <input
                   type="text"
                   value={formData.title}
-                  onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                  onChange={(e) => !isAutoFilling && setFormData({ ...formData, title: e.target.value })}
+                  disabled={isAutoFilling}
                   placeholder="Ex: Frontend Developer Intern"
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  className={cn(
+                    "w-full px-3 py-2 bg-white text-[#0F172A] text-sm border rounded-[4px] focus:outline-none focus:border-[#2563EB] transition-colors",
+                    autoFillStep === 2 ? 'border-[#2563EB] ring-2 ring-[#2563EB]/20' : 'border-[#CBD5E1]'
+                  )}
                 />
-              </div>
+              </motion.div>
 
               {/* Organization */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  scale: autoFillStep === 3 ? [1, 1.02, 1] : 1,
+                  backgroundColor: autoFillStep === 3 ? ['transparent', '#EFF6FF', 'transparent'] : 'transparent'
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Organizație / Companie</label>
                 <input
                   type="text"
                   value={formData.organization}
-                  onChange={(e) => setFormData({ ...formData, organization: e.target.value })}
+                  onChange={(e) => !isAutoFilling && setFormData({ ...formData, organization: e.target.value })}
+                  disabled={isAutoFilling}
                   placeholder="Ex: Google, Coursera, Personal"
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  className={cn(
+                    "w-full px-3 py-2 bg-white text-[#0F172A] text-sm border rounded-[4px] focus:outline-none focus:border-[#2563EB] transition-colors",
+                    autoFillStep === 3 ? 'border-[#2563EB] ring-2 ring-[#2563EB]/20' : 'border-[#CBD5E1]'
+                  )}
                 />
-              </div>
+              </motion.div>
 
               {/* Period */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  scale: autoFillStep === 4 ? [1, 1.02, 1] : 1,
+                  backgroundColor: autoFillStep === 4 ? ['transparent', '#EFF6FF', 'transparent'] : 'transparent'
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Perioada</label>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <select
                     value={formData.startYear}
-                    onChange={(e) => setFormData({ ...formData, startYear: e.target.value })}
-                    className="px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                    onChange={(e) => !isAutoFilling && setFormData({ ...formData, startYear: e.target.value })}
+                    disabled={isAutoFilling}
+                    className={cn(
+                      "px-3 py-2 bg-white text-[#0F172A] text-sm border rounded-[4px] focus:outline-none focus:border-[#2563EB]",
+                      autoFillStep === 4 ? 'border-[#2563EB]' : 'border-[#CBD5E1]'
+                    )}
                   >
                     {years.map(year => (
                       <option key={year} value={year}>{year}</option>
@@ -288,11 +425,18 @@ export default function ExperiencesPage() {
                   </select>
                   <span className="text-[#64748B]">—</span>
                   {formData.current ? (
-                    <span className="px-3 py-2 bg-[#EFF6FF] text-[#2563EB] text-sm rounded-[4px]">Prezent</span>
+                    <motion.span
+                      initial={{ scale: 0.9 }}
+                      animate={{ scale: 1 }}
+                      className="px-3 py-2 bg-[#EFF6FF] text-[#2563EB] text-sm rounded-[4px] font-medium"
+                    >
+                      Prezent
+                    </motion.span>
                   ) : (
                     <select
                       value={formData.endYear}
-                      onChange={(e) => setFormData({ ...formData, endYear: e.target.value })}
+                      onChange={(e) => !isAutoFilling && setFormData({ ...formData, endYear: e.target.value })}
+                      disabled={isAutoFilling}
                       className="px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
                     >
                       {years.map(year => (
@@ -304,53 +448,78 @@ export default function ExperiencesPage() {
                     <input
                       type="checkbox"
                       checked={formData.current}
-                      onChange={(e) => setFormData({ ...formData, current: e.target.checked })}
+                      onChange={(e) => !isAutoFilling && setFormData({ ...formData, current: e.target.checked })}
+                      disabled={isAutoFilling}
                       className="rounded border-[#CBD5E1]"
                     />
                     În desfășurare
                   </label>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Description */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  scale: autoFillStep === 5 ? [1, 1.02, 1] : 1,
+                  backgroundColor: autoFillStep === 5 ? ['transparent', '#EFF6FF', 'transparent'] : 'transparent'
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Descriere (opțional)</label>
                 <textarea
                   value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={(e) => !isAutoFilling && setFormData({ ...formData, description: e.target.value })}
+                  disabled={isAutoFilling}
                   placeholder="Descrie pe scurt ce ai făcut, ce ai învățat, ce rezultate ai obținut..."
                   rows={3}
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB] resize-none"
+                  className={cn(
+                    "w-full px-3 py-2 bg-white text-[#0F172A] text-sm border rounded-[4px] focus:outline-none focus:border-[#2563EB] resize-none transition-colors",
+                    autoFillStep === 5 ? 'border-[#2563EB] ring-2 ring-[#2563EB]/20' : 'border-[#CBD5E1]'
+                  )}
                 />
-              </div>
+              </motion.div>
 
               {/* Skills */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  scale: autoFillStep === 6 ? [1, 1.02, 1] : 1,
+                  backgroundColor: autoFillStep === 6 ? ['transparent', '#EFF6FF', 'transparent'] : 'transparent'
+                }}
+                transition={{ duration: 0.3 }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Skilluri folosite/învățate</label>
                 <div className="flex flex-wrap gap-1">
                   {suggestedSkills.map(skill => (
-                    <button
+                    <motion.button
                       key={skill}
-                      onClick={() => toggleSkill(skill)}
+                      onClick={() => !isAutoFilling && toggleSkill(skill)}
+                      disabled={isAutoFilling}
+                      animate={{
+                        scale: autoFillStep === 6 && formData.skills?.includes(skill) ? 1.15 : 1
+                      }}
+                      transition={{ type: 'spring', stiffness: 400, damping: 15 }}
                       className={cn(
                         'px-2 py-1 text-xs rounded-[2px] transition-colors',
                         formData.skills?.includes(skill)
                           ? 'bg-[#DCFCE7] text-[#16A34A]'
-                          : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
+                          : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]',
+                        isAutoFilling && 'cursor-not-allowed'
                       )}
                     >
                       {skill}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
-              </div>
+              </motion.div>
 
               {/* Actions */}
               <div className="flex gap-2">
-                <Button onClick={handleAddExperience} disabled={!formData.title}>
+                <Button onClick={handleAddExperience} disabled={!formData.title || isAutoFilling}>
                   <Plus size={16} className="mr-1" /> Adaugă
                 </Button>
-                <Button variant="ghost" onClick={() => setShowAddForm(false)}>
+                <Button variant="ghost" onClick={() => setShowAddForm(false)} disabled={isAutoFilling}>
                   Anulează
                 </Button>
               </div>
@@ -364,7 +533,7 @@ export default function ExperiencesPage() {
             exit={{ opacity: 0 }}
           >
             <button
-              onClick={() => setShowAddForm(true)}
+              onClick={handleOpenForm}
               className="w-full p-4 border-2 border-dashed border-[#CBD5E1] rounded-[4px] text-[#64748B] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors flex items-center justify-center gap-2"
             >
               <Plus size={20} />

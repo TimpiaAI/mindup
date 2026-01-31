@@ -137,9 +137,17 @@ export default function JobDetailPage({ params }: { params: Promise<{ jobId: str
                     {FACULTIES.slice(0, 6).map((faculty) => (
                       <Link key={faculty.id} href={`/faculty/${faculty.id}`}>
                         <div className="p-3 border border-[#CBD5E1] rounded-[4px] hover:border-[#2563EB] transition-colors cursor-pointer">
-                          <div className="w-10 h-10 bg-gradient-to-br from-[#2563EB] to-[#1E40AF] rounded-[4px] flex items-center justify-center mb-2">
-                            <span className="text-white font-bold text-sm">{faculty.shortName}</span>
-                          </div>
+                          {faculty.logoUrl ? (
+                            <img
+                              src={faculty.logoUrl}
+                              alt={faculty.shortName}
+                              className="w-10 h-10 object-contain mb-2"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 bg-gradient-to-br from-[#2563EB] to-[#1E40AF] rounded-[4px] flex items-center justify-center mb-2">
+                              <span className="text-white font-bold text-sm">{faculty.shortName}</span>
+                            </div>
+                          )}
                           <div className="text-xs font-medium text-[#0F172A] truncate">{faculty.name}</div>
                           <div className="text-xs text-[#64748B]">{faculty.city}</div>
                         </div>

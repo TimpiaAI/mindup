@@ -75,8 +75,8 @@ export function OnboardingLayout({
       </div>
 
       {/* Content */}
-      <main className="flex-1 py-12">
-        <Container className="max-w-lg mx-auto">
+      <main className="flex-1 py-8 sm:py-12">
+        <Container className="max-w-lg sm:max-w-xl lg:max-w-2xl mx-auto px-4 sm:px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -103,7 +103,7 @@ export function OnboardingLayout({
 
       {/* Footer */}
       <footer className="sticky bottom-0 bg-white border-t border-[#CBD5E1] py-4">
-        <Container className="max-w-lg mx-auto">
+        <Container className="max-w-lg sm:max-w-xl lg:max-w-2xl mx-auto px-4 sm:px-6">
           {nextHref ? (
             <Link href={nextHref} className="block">
               <Button

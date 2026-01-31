@@ -34,9 +34,17 @@ export default function FacultyDetailPage({ params }: { params: Promise<{ facult
             className="mb-8"
           >
             <div className="flex items-start gap-4">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#2563EB] to-[#1E40AF] rounded-[4px] flex items-center justify-center">
-                <span className="text-white font-bold text-xl">{faculty.shortName}</span>
-              </div>
+              {faculty.logoUrl ? (
+                <img
+                  src={faculty.logoUrl}
+                  alt={faculty.shortName}
+                  className="w-16 h-16 object-contain"
+                />
+              ) : (
+                <div className="w-16 h-16 bg-gradient-to-br from-[#2563EB] to-[#1E40AF] rounded-[4px] flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">{faculty.shortName}</span>
+                </div>
+              )}
               <div>
                 <h1 className="text-2xl font-bold text-[#0F172A] mb-1">{faculty.name}</h1>
                 <p className="text-[#64748B]">{faculty.university}</p>

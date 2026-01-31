@@ -24,7 +24,6 @@ export default function SkillsPage() {
   const [selectedSkills, setSelectedSkills] = useState<SelectedSkill[]>(profile.skills || []);
   const [activeCategory, setActiveCategory] = useState<'programming' | 'design' | 'business'>('programming');
   const [isAutoFilling, setIsAutoFilling] = useState(false);
-  const [showAutoFillHint, setShowAutoFillHint] = useState(true);
   const autoFillTriggered = useRef(false);
 
   // Auto-fill animation for demo
@@ -32,7 +31,6 @@ export default function SkillsPage() {
     if (autoFillTriggered.current) return;
     autoFillTriggered.current = true;
     setIsAutoFilling(true);
-    setShowAutoFillHint(false);
 
     // Clear existing skills first
     setSelectedSkills([]);
@@ -49,12 +47,17 @@ export default function SkillsPage() {
     setIsAutoFilling(false);
   };
 
-  // Pre-fill with mock data for demo (instant if already has data)
+  // Auto-start demo on page load
   useEffect(() => {
     if (profile.skills && profile.skills.length > 0) {
       setSelectedSkills(profile.skills);
-      setShowAutoFillHint(false);
       autoFillTriggered.current = true;
+    } else {
+      // Auto-start demo after a short delay
+      const timer = setTimeout(() => {
+        startAutoFill();
+      }, 800);
+      return () => clearTimeout(timer);
     }
   }, []);
 
@@ -96,43 +99,27 @@ export default function SkillsPage() {
       canContinue={canContinue}
       onNext={handleNext}
     >
-      {/* Auto-fill hint */}
+      {/* Auto-filling indicator */}
       <AnimatePresence>
-        {showAutoFillHint && (
-          <motion.button
+        {isAutoFilling && (
+          <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10, scale: 0.9 }}
-            onClick={startAutoFill}
-            disabled={isAutoFilling}
-            className="w-full mb-4 p-3 bg-gradient-to-r from-[#EFF6FF] to-[#F5F3FF] border border-[#2563EB]/20 rounded-[4px] flex items-center justify-center gap-2 text-[#2563EB] hover:from-[#DBEAFE] hover:to-[#EDE9FE] transition-colors"
+            exit={{ opacity: 0, y: -10 }}
+            className="mb-4 p-3 bg-[#F0FDF4] border border-[#16A34A]/20 rounded-[4px] flex items-center gap-2"
           >
-            <Sparkles size={18} className="text-[#7C3AED]" />
-            <span className="text-sm font-medium">
-              Click pentru demo auto-completare
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            >
+              <Sparkles size={18} className="text-[#16A34A]" />
+            </motion.div>
+            <span className="text-sm text-[#16A34A] font-medium">
+              Se adaugă skillurile automat...
             </span>
-          </motion.button>
+          </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Auto-filling indicator */}
-      {isAutoFilling && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="mb-4 p-3 bg-[#F0FDF4] border border-[#16A34A]/20 rounded-[4px] flex items-center gap-2"
-        >
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          >
-            <Sparkles size={18} className="text-[#16A34A]" />
-          </motion.div>
-          <span className="text-sm text-[#16A34A] font-medium">
-            Se adaugă skillurile automat...
-          </span>
-        </motion.div>
-      )}
 
       {/* Category tabs */}
       <div className="flex gap-2 mb-4">
