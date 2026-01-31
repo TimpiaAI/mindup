@@ -1,9 +1,12 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { Play } from 'lucide-react';
 import { Button } from '@/components/ui';
 import { Container } from '@/components/layout';
+import { useAppStore } from '@/lib/store';
 
 const stats = [
   { value: '10K+', label: 'Utilizatori' },

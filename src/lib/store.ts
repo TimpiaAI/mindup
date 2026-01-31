@@ -89,6 +89,9 @@ interface AppState {
   currentStep: number;
   totalSteps: number;
 
+  // Demo mode - auto-fills and auto-navigates through all steps
+  demoMode: boolean;
+
   // Career results
   visibleCategories: CareerCategory[];
   dismissedCategories: number[];
@@ -100,6 +103,7 @@ interface AppState {
   setUser: (data: Partial<UserData>) => void;
   setProfile: (data: Partial<ProfileData>) => void;
   setCurrentStep: (step: number) => void;
+  setDemoMode: (enabled: boolean) => void;
   dismissCategory: (categoryId: number) => void;
   addChatMessage: (jobId: number, message: ChatMessage) => void;
   resetOnboarding: () => void;
@@ -128,6 +132,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
   currentStep: 1,
   totalSteps: 13,
+  demoMode: false,
   visibleCategories: CAREER_CATEGORIES.slice(0, 4),
   dismissedCategories: [],
   chatMessages: {},
@@ -142,6 +147,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   })),
 
   setCurrentStep: (step) => set({ currentStep: step }),
+
+  setDemoMode: (enabled) => set({ demoMode: enabled }),
 
   dismissCategory: (categoryId) => set((state) => {
     const newDismissed = [...state.dismissedCategories, categoryId];
@@ -181,6 +188,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       projects: []
     },
     currentStep: 1,
+    demoMode: false,
     visibleCategories: CAREER_CATEGORIES.slice(0, 4),
     dismissedCategories: [],
     chatMessages: {}

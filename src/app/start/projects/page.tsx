@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Github, Globe, Linkedin, ExternalLink, Link2, Folder } from 'lucide-react';
+import { Plus, X, Github, Globe, Linkedin, ExternalLink, Link2, Folder, Sparkles } from 'lucide-react';
 import { OnboardingLayout } from '@/components/onboarding';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAppStore } from '@/lib/store';
@@ -25,11 +25,22 @@ const linkTypes = [
   { id: 'other', label: 'Alt link', icon: Link2, color: 'bg-[#64748B]', placeholder: 'https://...' },
 ];
 
+// Demo data for auto-fill
+const DEMO_PROJECT = {
+  type: 'linkedin' as const,
+  title: 'LinkedIn Profile',
+  url: 'https://www.linkedin.com/in/pica-ovidiu-stefan/',
+  description: 'Profilul meu profesional LinkedIn'
+};
+
 export default function ProjectsPage() {
   const router = useRouter();
   const { profile, setProfile } = useAppStore();
   const [projects, setProjects] = useState<Project[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [autoFillStep, setAutoFillStep] = useState(0);
+  const autoFillTriggered = useRef(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Project>>({
@@ -38,6 +49,45 @@ export default function ProjectsPage() {
     url: '',
     description: ''
   });
+
+  // Typewriter effect for text fields
+  const typeText = async (text: string, setter: (val: string) => void, delay = 25) => {
+    for (let i = 0; i <= text.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      setter(text.slice(0, i));
+    }
+  };
+
+  // Auto-fill animation
+  const startAutoFill = async () => {
+    if (autoFillTriggered.current) return;
+    autoFillTriggered.current = true;
+    setIsAutoFilling(true);
+
+    // Step 1: Select LinkedIn type
+    setAutoFillStep(1);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setFormData(prev => ({ ...prev, type: 'linkedin' }));
+
+    // Step 2: Type URL
+    await new Promise(resolve => setTimeout(resolve, 400));
+    setAutoFillStep(2);
+    await typeText(DEMO_PROJECT.url, (val) => setFormData(prev => ({ ...prev, url: val })), 20);
+
+    // Step 3: Type title
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setAutoFillStep(3);
+    await typeText(DEMO_PROJECT.title, (val) => setFormData(prev => ({ ...prev, title: val })), 40);
+
+    // Step 4: Type description
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setAutoFillStep(4);
+    await typeText(DEMO_PROJECT.description, (val) => setFormData(prev => ({ ...prev, description: val })), 30);
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsAutoFilling(false);
+    setAutoFillStep(0);
+  };
 
   const handleAddProject = () => {
     if (!formData.url) return;
@@ -68,7 +118,29 @@ export default function ProjectsPage() {
   const handleQuickAdd = (type: string) => {
     setFormData({ ...formData, type: type as Project['type'] });
     setShowAddForm(true);
+
+    // Auto-start demo when LinkedIn is clicked
+    if (type === 'linkedin' && !autoFillTriggered.current) {
+      setTimeout(() => {
+        startAutoFill();
+      }, 500);
+    }
   };
+
+  // Auto-start demo on page load
+  useEffect(() => {
+    if (!autoFillTriggered.current && projects.length === 0) {
+      const timer = setTimeout(() => {
+        // Open form and start demo with LinkedIn
+        setFormData({ type: 'linkedin', title: '', url: '', description: '' });
+        setShowAddForm(true);
+        setTimeout(() => {
+          startAutoFill();
+        }, 500);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const handleNext = () => {
     setProfile({ projects: projects as any });
@@ -194,11 +266,41 @@ export default function ProjectsPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
+            {/* Auto-filling indicator */}
+            <AnimatePresence>
+              {isAutoFilling && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-4 p-3 bg-[#EFF6FF] border border-[#2563EB]/20 rounded-[4px] flex items-center gap-2"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Sparkles size={18} className="text-[#2563EB]" />
+                  </motion.div>
+                  <span className="text-sm text-[#2563EB] font-medium">
+                    Se completează automat...
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <Card className="border-[#2563EB] border-2">
               <h3 className="font-medium text-[#0F172A] mb-4">Adaugă link</h3>
 
               {/* Type selector */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  boxShadow: autoFillStep === 1 ? '0 0 0 2px #2563EB' : '0 0 0 0px transparent',
+                  backgroundColor: autoFillStep === 1 ? '#EFF6FF' : 'transparent',
+                  borderRadius: '4px',
+                  padding: autoFillStep === 1 ? '8px' : '0px'
+                }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Tip link</label>
                 <div className="flex flex-wrap gap-2">
                   {linkTypes.map(type => {
@@ -207,11 +309,13 @@ export default function ProjectsPage() {
                       <button
                         key={type.id}
                         onClick={() => setFormData({ ...formData, type: type.id as Project['type'] })}
+                        disabled={isAutoFilling}
                         className={cn(
                           'flex items-center gap-2 px-3 py-2 rounded-[4px] text-sm transition-colors',
                           formData.type === type.id
                             ? `${type.color} text-white`
-                            : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]'
+                            : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0]',
+                          isAutoFilling && 'cursor-not-allowed opacity-70'
                         )}
                       >
                         <TypeIcon size={16} />
@@ -220,12 +324,12 @@ export default function ProjectsPage() {
                     );
                   })}
                 </div>
-              </div>
+              </motion.div>
 
               {/* URL */}
               <div className="mb-4">
                 <label className="text-sm text-[#64748B] mb-2 block">URL *</label>
-                <input
+                <motion.input
                   type="url"
                   value={formData.url}
                   onChange={(e) => {
@@ -237,31 +341,46 @@ export default function ProjectsPage() {
                     });
                   }}
                   placeholder={linkTypes.find(t => t.id === formData.type)?.placeholder}
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  disabled={isAutoFilling}
+                  animate={{
+                    boxShadow: autoFillStep === 2 ? '0 0 0 2px #2563EB' : '0 0 0 0px transparent',
+                    backgroundColor: autoFillStep === 2 ? '#EFF6FF' : '#FFFFFF'
+                  }}
+                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB] disabled:bg-[#F1F5F9]"
                 />
               </div>
 
               {/* Title */}
               <div className="mb-4">
                 <label className="text-sm text-[#64748B] mb-2 block">Titlu (opțional)</label>
-                <input
+                <motion.input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder={`Ex: ${linkTypes.find(t => t.id === formData.type)?.label} personal`}
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  disabled={isAutoFilling}
+                  animate={{
+                    boxShadow: autoFillStep === 3 ? '0 0 0 2px #2563EB' : '0 0 0 0px transparent',
+                    backgroundColor: autoFillStep === 3 ? '#EFF6FF' : '#FFFFFF'
+                  }}
+                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB] disabled:bg-[#F1F5F9]"
                 />
               </div>
 
               {/* Description */}
               <div className="mb-4">
                 <label className="text-sm text-[#64748B] mb-2 block">Descriere (opțional)</label>
-                <input
+                <motion.input
                   type="text"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   placeholder="Ex: Portfolio personal cu proiecte React"
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  disabled={isAutoFilling}
+                  animate={{
+                    boxShadow: autoFillStep === 4 ? '0 0 0 2px #2563EB' : '0 0 0 0px transparent',
+                    backgroundColor: autoFillStep === 4 ? '#EFF6FF' : '#FFFFFF'
+                  }}
+                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB] disabled:bg-[#F1F5F9]"
                 />
               </div>
 

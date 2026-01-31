@@ -66,8 +66,8 @@ export const AVAILABLE_SKILLS = {
 // ==================== MOCK USER (PRECOMPLETED) ====================
 
 export const MOCK_USER = {
-  name: "Andrei",
-  surname: "Popescu",
+  name: "Ovidiu Stefan",
+  surname: "Pica",
   age: 19,
   city: "București",
   level: "student" as const,
@@ -970,13 +970,13 @@ Cartea 'Designing Data-Intensive Applications' e biblia pentru backend.`,
 
 export const GENERATED_CV = {
   personalInfo: {
-    name: "Andrei Popescu",
+    name: "Pica Ovidiu Stefan",
     title: "Junior Frontend Developer",
-    email: "andrei.popescu@email.com",
+    email: "pica.ovidiu@email.com",
     phone: "+40 722 123 456",
     location: "București, România",
-    linkedin: "linkedin.com/in/andreipopescu",
-    github: "github.com/andreipopescu"
+    linkedin: "linkedin.com/in/pica-ovidiu-stefan",
+    github: "github.com/pica-ovidiu-stefan"
   },
   summary: "Student pasionat de dezvoltare web cu experiență practică în React și JavaScript. Am participat la hackathoane și am realizat proiecte freelance pentru clienți internaționali.",
   skills: {

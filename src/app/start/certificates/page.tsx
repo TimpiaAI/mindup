@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Upload, Award, FileImage, Calendar, Building2 } from 'lucide-react';
+import { Plus, X, Upload, Award, FileImage, Calendar, Building2, Sparkles } from 'lucide-react';
 import { OnboardingLayout } from '@/components/onboarding';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAppStore } from '@/lib/store';
@@ -28,12 +28,24 @@ const suggestedCertificates = [
   { title: 'Diploma BAC', issuer: 'Ministerul Educației' },
 ];
 
+// Demo data for auto-fill
+const DEMO_CERTIFICATE = {
+  title: 'Samsung Solve for Tomorrow - Locul 1',
+  issuer: 'Samsung România',
+  date: '2025',
+  credentialUrl: '',
+  imagePath: '/demo/diploma_sft.png'
+};
+
 export default function CertificatesPage() {
   const router = useRouter();
   const { profile, setProfile } = useAppStore();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const [autoFillStep, setAutoFillStep] = useState(0);
+  const autoFillTriggered = useRef(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Certificate>>({
@@ -44,6 +56,59 @@ export default function CertificatesPage() {
     credentialUrl: '',
     imagePreview: ''
   });
+
+  // Typewriter effect for text fields
+  const typeText = async (text: string, setter: (val: string) => void, delay = 30) => {
+    for (let i = 0; i <= text.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      setter(text.slice(0, i));
+    }
+  };
+
+  // Auto-fill animation with image upload simulation
+  const startAutoFill = async () => {
+    if (autoFillTriggered.current) return;
+    autoFillTriggered.current = true;
+    setIsAutoFilling(true);
+
+    // Step 1: Simulate image upload
+    setAutoFillStep(1);
+    await new Promise(resolve => setTimeout(resolve, 600));
+    setFormData(prev => ({ ...prev, imagePreview: DEMO_CERTIFICATE.imagePath }));
+
+    // Step 2: Type title
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setAutoFillStep(2);
+    await typeText(DEMO_CERTIFICATE.title, (val) => setFormData(prev => ({ ...prev, title: val })), 35);
+
+    // Step 3: Type issuer
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setAutoFillStep(3);
+    await typeText(DEMO_CERTIFICATE.issuer, (val) => setFormData(prev => ({ ...prev, issuer: val })), 40);
+
+    // Step 4: Select year
+    await new Promise(resolve => setTimeout(resolve, 300));
+    setAutoFillStep(4);
+    setFormData(prev => ({ ...prev, date: DEMO_CERTIFICATE.date }));
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+    setIsAutoFilling(false);
+    setAutoFillStep(0);
+  };
+
+  // Auto-start demo on page load
+  useEffect(() => {
+    if (!autoFillTriggered.current && certificates.length === 0) {
+      const timer = setTimeout(() => {
+        // Open form and start demo
+        setShowAddForm(true);
+        setTimeout(() => {
+          startAutoFill();
+        }, 500);
+      }, 800);
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -101,7 +166,7 @@ export default function CertificatesPage() {
 
   const canContinue = true; // Optional step
 
-  const years = Array.from({ length: 15 }, (_, i) => (2024 - i).toString());
+  const years = Array.from({ length: 16 }, (_, i) => (2025 - i).toString());
 
   return (
     <OnboardingLayout
@@ -212,11 +277,41 @@ export default function CertificatesPage() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
           >
+            {/* Auto-filling indicator */}
+            <AnimatePresence>
+              {isAutoFilling && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="mb-4 p-3 bg-[#FEF3C7] border border-[#CA8A04]/20 rounded-[4px] flex items-center gap-2"
+                >
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  >
+                    <Sparkles size={18} className="text-[#CA8A04]" />
+                  </motion.div>
+                  <span className="text-sm text-[#CA8A04] font-medium">
+                    Se adaugă diploma automat...
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+
             <Card className="border-[#2563EB] border-2">
               <h3 className="font-medium text-[#0F172A] mb-4">Adaugă certificat / diplomă</h3>
 
               {/* Image upload */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  boxShadow: autoFillStep === 1 ? '0 0 0 2px #CA8A04' : '0 0 0 0px transparent',
+                  backgroundColor: autoFillStep === 1 ? '#FEF3C7' : 'transparent',
+                  borderRadius: '4px',
+                  padding: autoFillStep === 1 ? '8px' : '0px'
+                }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Imagine (opțional)</label>
                 <input
                   ref={fileInputRef}
@@ -224,70 +319,103 @@ export default function CertificatesPage() {
                   accept="image/*"
                   onChange={handleImageUpload}
                   className="hidden"
+                  disabled={isAutoFilling}
                 />
                 {formData.imagePreview ? (
-                  <div className="relative w-full h-40 rounded-[4px] overflow-hidden bg-[#F1F5F9]">
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="relative w-full h-40 rounded-[4px] overflow-hidden bg-[#F1F5F9]"
+                  >
                     <img
                       src={formData.imagePreview}
                       alt="Preview"
                       className="w-full h-full object-contain"
                     />
-                    <button
-                      onClick={() => setFormData({ ...formData, imagePreview: '' })}
-                      className="absolute top-2 right-2 p-1 bg-white rounded-full shadow"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
+                    {!isAutoFilling && (
+                      <button
+                        onClick={() => setFormData({ ...formData, imagePreview: '' })}
+                        className="absolute top-2 right-2 p-1 bg-white rounded-full shadow"
+                      >
+                        <X size={16} />
+                      </button>
+                    )}
+                  </motion.div>
                 ) : (
                   <button
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full h-32 border-2 border-dashed border-[#CBD5E1] rounded-[4px] flex flex-col items-center justify-center gap-2 text-[#64748B] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors"
+                    disabled={isAutoFilling}
+                    className={cn(
+                      "w-full h-32 border-2 border-dashed border-[#CBD5E1] rounded-[4px] flex flex-col items-center justify-center gap-2 text-[#64748B] hover:border-[#2563EB] hover:text-[#2563EB] transition-colors",
+                      isAutoFilling && "cursor-not-allowed opacity-50"
+                    )}
                   >
                     <Upload size={24} />
                     <span className="text-sm">Click pentru a încărca o imagine</span>
                     <span className="text-xs">PNG, JPG, max 5MB</span>
                   </button>
                 )}
-              </div>
+              </motion.div>
 
               {/* Title */}
               <div className="mb-4">
                 <label className="text-sm text-[#64748B] mb-2 block">Denumire certificat / diplomă *</label>
-                <input
+                <motion.input
                   type="text"
                   value={formData.title}
                   onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   placeholder="Ex: Google Digital Marketing Certificate"
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  disabled={isAutoFilling}
+                  animate={{
+                    boxShadow: autoFillStep === 2 ? '0 0 0 2px #CA8A04' : '0 0 0 0px transparent',
+                    backgroundColor: autoFillStep === 2 ? '#FEF3C7' : '#FFFFFF'
+                  }}
+                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB] disabled:bg-[#F1F5F9]"
                 />
               </div>
 
               {/* Issuer */}
               <div className="mb-4">
                 <label className="text-sm text-[#64748B] mb-2 block">Emis de</label>
-                <input
+                <motion.input
                   type="text"
                   value={formData.issuer}
                   onChange={(e) => setFormData({ ...formData, issuer: e.target.value })}
                   placeholder="Ex: Google / Coursera"
-                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  disabled={isAutoFilling}
+                  animate={{
+                    boxShadow: autoFillStep === 3 ? '0 0 0 2px #CA8A04' : '0 0 0 0px transparent',
+                    backgroundColor: autoFillStep === 3 ? '#FEF3C7' : '#FFFFFF'
+                  }}
+                  className="w-full px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB] disabled:bg-[#F1F5F9]"
                 />
               </div>
 
               {/* Date */}
-              <div className="mb-4">
+              <motion.div
+                className="mb-4"
+                animate={{
+                  boxShadow: autoFillStep === 4 ? '0 0 0 2px #CA8A04' : '0 0 0 0px transparent',
+                  backgroundColor: autoFillStep === 4 ? '#FEF3C7' : 'transparent',
+                  borderRadius: '4px',
+                  padding: autoFillStep === 4 ? '8px' : '0px'
+                }}
+              >
                 <label className="text-sm text-[#64748B] mb-2 block">Anul obținerii</label>
                 <select
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]"
+                  disabled={isAutoFilling}
+                  className={cn(
+                    "px-3 py-2 bg-white text-[#0F172A] text-sm border border-[#CBD5E1] rounded-[4px] focus:outline-none focus:border-[#2563EB]",
+                    isAutoFilling && "cursor-not-allowed opacity-70"
+                  )}
                 >
                   {years.map(year => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
-              </div>
+              </motion.div>
 
               {/* Credential URL */}
               <div className="mb-4">
