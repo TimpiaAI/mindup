@@ -1,7 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, X, Briefcase, GraduationCap, Code, Trophy, Heart, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { OnboardingLayout } from '@/components/onboarding';
@@ -49,12 +49,13 @@ const demoExperience = {
 
 export default function ExperiencesPage() {
   const router = useRouter();
-  const { profile, setProfile } = useAppStore();
+  const { profile, setProfile, demoMode } = useAppStore();
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [autoFillStep, setAutoFillStep] = useState(0);
+  const demoStarted = useRef(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Experience>>({
@@ -77,7 +78,7 @@ export default function ExperiencesPage() {
   };
 
   // Auto-fill animation
-  const startAutoFill = async () => {
+  const startAutoFill = async (shouldNavigate = false) => {
     setIsAutoFilling(true);
 
     // Step 1: Select type
@@ -114,7 +115,36 @@ export default function ExperiencesPage() {
 
     setAutoFillStep(7);
     setIsAutoFilling(false);
+
+    // Auto-navigate if in demo mode
+    if (shouldNavigate) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      router.push('/start/certificates');
+    }
   };
+
+  // Demo mode: auto-open form and auto-navigate
+  useEffect(() => {
+    if (demoMode && !demoStarted.current) {
+      demoStarted.current = true;
+      // Open form and run demo
+      setShowAddForm(true);
+      setFormData({
+        type: 'project',
+        title: '',
+        organization: '',
+        startYear: '2024',
+        endYear: '2024',
+        current: false,
+        description: '',
+        skills: []
+      });
+      setAutoFillStep(0);
+      setTimeout(() => {
+        startAutoFill(true);
+      }, 500);
+    }
+  }, [demoMode]);
 
   const handleOpenForm = () => {
     setShowAddForm(true);
@@ -131,10 +161,12 @@ export default function ExperiencesPage() {
     });
     setAutoFillStep(0);
 
-    // Auto-start demo after a short delay
-    setTimeout(() => {
-      startAutoFill();
-    }, 500);
+    // Auto-start demo after a short delay (only if not in demo mode - demo mode handles it separately)
+    if (!demoMode) {
+      setTimeout(() => {
+        startAutoFill(false);
+      }, 500);
+    }
   };
 
   const handleAddExperience = () => {

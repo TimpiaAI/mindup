@@ -1,23 +1,51 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles } from 'lucide-react';
 import { OnboardingLayout } from '@/components/onboarding';
 import { useAppStore } from '@/lib/store';
 import { MOCK_PROFILE } from '@/lib/mock-data';
 
 export default function FreeTimePage() {
   const router = useRouter();
-  const { profile, setProfile } = useAppStore();
+  const { profile, setProfile, demoMode } = useAppStore();
   const [freeTime, setFreeTime] = useState(profile.freeTime || '');
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const demoStarted = useRef(false);
 
-  // Pre-fill with mock data for demo
+  // Typewriter effect
+  const typeText = async (text: string, setter: (val: string) => void, delay = 20) => {
+    for (let i = 0; i <= text.length; i++) {
+      await new Promise(resolve => setTimeout(resolve, delay));
+      setter(text.slice(0, i));
+    }
+  };
+
+  // Demo mode: auto-fill and auto-navigate
   useEffect(() => {
-    if (!freeTime) {
+    if (demoMode && !demoStarted.current) {
+      demoStarted.current = true;
+      const runDemo = async () => {
+        setIsAutoFilling(true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        await typeText(MOCK_PROFILE.freeTime, (val) => {
+          setFreeTime(val);
+          setProfile({ freeTime: val });
+        }, 15);
+
+        setIsAutoFilling(false);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        router.push('/start/clarity');
+      };
+      runDemo();
+    } else if (!demoMode && !freeTime) {
       setFreeTime(MOCK_PROFILE.freeTime);
       setProfile({ freeTime: MOCK_PROFILE.freeTime });
     }
-  }, []);
+  }, [demoMode]);
 
   const handleNext = () => {
     setProfile({ freeTime });

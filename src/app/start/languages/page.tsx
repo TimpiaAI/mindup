@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, X, Languages, ChevronDown, Check } from 'lucide-react';
+import { Plus, X, Languages, ChevronDown, Check, Sparkles } from 'lucide-react';
 import { OnboardingLayout } from '@/components/onboarding';
 import { Button, Card, Badge } from '@/components/ui';
 import { useAppStore } from '@/lib/store';
@@ -41,17 +41,43 @@ const levels = [
 
 export default function LanguagesPage() {
   const router = useRouter();
-  const { profile, setProfile } = useAppStore();
+  const { profile, setProfile, demoMode } = useAppStore();
   const [languages, setLanguages] = useState<Language[]>([
     { id: 'romanian', name: 'Română', level: 'native' } // Default Romanian
   ]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [selectedLevel, setSelectedLevel] = useState<string>('B1');
+  const [isAutoFilling, setIsAutoFilling] = useState(false);
+  const demoStarted = useRef(false);
 
-  // Pre-fill with mock data for demo
+  // Demo mode: auto-fill and auto-navigate
   useEffect(() => {
-    if (languages.length === 1 && MOCK_PROFILE.languages) {
+    if (demoMode && !demoStarted.current) {
+      demoStarted.current = true;
+      const runDemo = async () => {
+        setIsAutoFilling(true);
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        // Add languages one by one with animation
+        const mockLanguages = MOCK_PROFILE.languages.map(lang => ({
+          id: generateId(),
+          name: lang.name,
+          level: lang.level
+        }));
+
+        for (let i = 0; i < mockLanguages.length; i++) {
+          await new Promise(resolve => setTimeout(resolve, 400));
+          setLanguages(prev => [...prev, mockLanguages[i]]);
+        }
+
+        setIsAutoFilling(false);
+        await new Promise(resolve => setTimeout(resolve, 800));
+        router.push('/start/free-time');
+      };
+      runDemo();
+    } else if (!demoMode && languages.length === 1 && MOCK_PROFILE.languages) {
+      // Normal pre-fill
       const mockLanguages = MOCK_PROFILE.languages.map(lang => ({
         id: generateId(),
         name: lang.name,
@@ -62,7 +88,7 @@ export default function LanguagesPage() {
         ...mockLanguages
       ]);
     }
-  }, []);
+  }, [demoMode]);
 
   const handleAddLanguage = () => {
     if (!selectedLanguage) return;

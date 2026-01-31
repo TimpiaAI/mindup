@@ -34,6 +34,15 @@ const steps = [
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
+  const { setDemoMode, resetOnboarding } = useAppStore();
+
+  const handleStartDemo = () => {
+    resetOnboarding();
+    setDemoMode(true);
+    router.push('/start/name');
+  };
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -60,11 +69,22 @@ export default function LandingPage() {
             Completezi profilul în 5 minute. AI-ul analizează și îți arată
             carierele care ți se potrivesc.
           </p>
-          <Link href="/start/name">
-            <Button size="lg">
-              Începe gratuit
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+            <Link href="/start/name">
+              <Button size="lg">
+                Începe gratuit
+              </Button>
+            </Link>
+            <Button
+              size="lg"
+              variant="secondary"
+              onClick={handleStartDemo}
+              className="flex items-center gap-2"
+            >
+              <Play size={18} />
+              Demo automat
             </Button>
-          </Link>
+          </div>
           <p className="mt-4 text-sm text-[#64748B]">
             Fără card. Fără cont. 100% gratuit.
           </p>

@@ -20,14 +20,15 @@ const skillLevels = ['beginner', 'intermediate', 'advanced'];
 
 export default function SkillsPage() {
   const router = useRouter();
-  const { profile, setProfile } = useAppStore();
+  const { profile, setProfile, demoMode } = useAppStore();
   const [selectedSkills, setSelectedSkills] = useState<SelectedSkill[]>(profile.skills || []);
   const [activeCategory, setActiveCategory] = useState<'programming' | 'design' | 'business'>('programming');
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const autoFillTriggered = useRef(false);
+  const demoStarted = useRef(false);
 
   // Auto-fill animation for demo
-  const startAutoFill = async () => {
+  const startAutoFill = async (shouldNavigate = false) => {
     if (autoFillTriggered.current) return;
     autoFillTriggered.current = true;
     setIsAutoFilling(true);
@@ -45,21 +46,33 @@ export default function SkillsPage() {
 
     setProfile({ skills: mockSkills });
     setIsAutoFilling(false);
+
+    // Auto-navigate if in demo mode
+    if (shouldNavigate) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      router.push('/start/cv-preview');
+    }
   };
 
-  // Auto-start demo on page load
+  // Demo mode: auto-fill and auto-navigate
   useEffect(() => {
-    if (profile.skills && profile.skills.length > 0) {
-      setSelectedSkills(profile.skills);
-      autoFillTriggered.current = true;
-    } else {
-      // Auto-start demo after a short delay
-      const timer = setTimeout(() => {
-        startAutoFill();
-      }, 800);
-      return () => clearTimeout(timer);
+    if (demoMode && !demoStarted.current) {
+      demoStarted.current = true;
+      setTimeout(() => {
+        startAutoFill(true);
+      }, 500);
+    } else if (!demoMode) {
+      if (profile.skills && profile.skills.length > 0) {
+        setSelectedSkills(profile.skills);
+        autoFillTriggered.current = true;
+      } else {
+        const timer = setTimeout(() => {
+          startAutoFill(false);
+        }, 800);
+        return () => clearTimeout(timer);
+      }
     }
-  }, []);
+  }, [demoMode]);
 
   const toggleSkill = (skill: string) => {
     const exists = selectedSkills.find(s => s.name === skill);

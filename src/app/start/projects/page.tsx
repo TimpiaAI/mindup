@@ -35,12 +35,14 @@ const DEMO_PROJECT = {
 
 export default function ProjectsPage() {
   const router = useRouter();
-  const { profile, setProfile } = useAppStore();
+  const { profile, setProfile, demoMode } = useAppStore();
   const [projects, setProjects] = useState<Project[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [autoFillStep, setAutoFillStep] = useState(0);
   const autoFillTriggered = useRef(false);
+  const demoStarted = useRef(false);
+  const [showingLinkTypes, setShowingLinkTypes] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Project>>({
@@ -59,7 +61,7 @@ export default function ProjectsPage() {
   };
 
   // Auto-fill animation
-  const startAutoFill = async () => {
+  const startAutoFill = async (shouldNavigate = false) => {
     if (autoFillTriggered.current) return;
     autoFillTriggered.current = true;
     setIsAutoFilling(true);
@@ -87,6 +89,12 @@ export default function ProjectsPage() {
     await new Promise(resolve => setTimeout(resolve, 500));
     setIsAutoFilling(false);
     setAutoFillStep(0);
+
+    // Auto-navigate if in demo mode
+    if (shouldNavigate) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      router.push('/start/languages');
+    }
   };
 
   const handleAddProject = () => {
@@ -127,20 +135,37 @@ export default function ProjectsPage() {
     }
   };
 
-  // Auto-start demo on page load
+  // Demo mode: show link types for longer, then auto-fill and navigate
   useEffect(() => {
-    if (!autoFillTriggered.current && projects.length === 0) {
-      const timer = setTimeout(() => {
-        // Open form and start demo with LinkedIn
+    if (demoMode && !demoStarted.current) {
+      demoStarted.current = true;
+      // Show quick add buttons first for 2 seconds
+      setShowingLinkTypes(true);
+      setTimeout(() => {
+        // Then open form with LinkedIn and start demo
         setFormData({ type: 'linkedin', title: '', url: '', description: '' });
         setShowAddForm(true);
+        setShowingLinkTypes(false);
         setTimeout(() => {
-          startAutoFill();
+          startAutoFill(true);
         }, 500);
+      }, 2000); // Show link types for 2 seconds
+    } else if (!demoMode && !autoFillTriggered.current && projects.length === 0) {
+      // Normal auto-start demo on page load - also show link types longer
+      const timer = setTimeout(() => {
+        setShowingLinkTypes(true);
+        setTimeout(() => {
+          setFormData({ type: 'linkedin', title: '', url: '', description: '' });
+          setShowAddForm(true);
+          setShowingLinkTypes(false);
+          setTimeout(() => {
+            startAutoFill(false);
+          }, 500);
+        }, 1500); // Show link types for 1.5 seconds in normal mode
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [demoMode]);
 
   const handleNext = () => {
     setProfile({ projects: projects as any });

@@ -1,9 +1,10 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import { useState, useRef } from 'react';
-import { motion } from 'framer-motion';
+import { useState, useRef, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
+import { Sparkles } from 'lucide-react';
 import { OnboardingLayout } from '@/components/onboarding';
 import { useAppStore } from '@/lib/store';
 import {
@@ -15,9 +16,22 @@ import { cn } from '@/lib/utils';
 
 export default function CVPreviewPage() {
   const router = useRouter();
-  const { user, profile, setUser, loadMockData } = useAppStore();
+  const { user, profile, setUser, loadMockData, demoMode } = useAppStore();
   const [profilePhoto, setProfilePhoto] = useState<string>(user.profilePhoto || '/demo/profile.jpg');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const demoStarted = useRef(false);
+
+  // Demo mode: auto-navigate after showing preview
+  useEffect(() => {
+    if (demoMode && !demoStarted.current) {
+      demoStarted.current = true;
+      const timer = setTimeout(() => {
+        loadMockData();
+        router.push('/loading');
+      }, 2500); // Show preview for 2.5 seconds
+      return () => clearTimeout(timer);
+    }
+  }, [demoMode]);
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

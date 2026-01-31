@@ -39,13 +39,14 @@ const DEMO_CERTIFICATE = {
 
 export default function CertificatesPage() {
   const router = useRouter();
-  const { profile, setProfile } = useAppStore();
+  const { profile, setProfile, demoMode } = useAppStore();
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [showAddForm, setShowAddForm] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAutoFilling, setIsAutoFilling] = useState(false);
   const [autoFillStep, setAutoFillStep] = useState(0);
   const autoFillTriggered = useRef(false);
+  const demoStarted = useRef(false);
 
   // Form state
   const [formData, setFormData] = useState<Partial<Certificate>>({
@@ -66,7 +67,7 @@ export default function CertificatesPage() {
   };
 
   // Auto-fill animation with image upload simulation
-  const startAutoFill = async () => {
+  const startAutoFill = async (shouldNavigate = false) => {
     if (autoFillTriggered.current) return;
     autoFillTriggered.current = true;
     setIsAutoFilling(true);
@@ -94,21 +95,33 @@ export default function CertificatesPage() {
     await new Promise(resolve => setTimeout(resolve, 500));
     setIsAutoFilling(false);
     setAutoFillStep(0);
+
+    // Auto-navigate if in demo mode
+    if (shouldNavigate) {
+      await new Promise(resolve => setTimeout(resolve, 600));
+      router.push('/start/projects');
+    }
   };
 
-  // Auto-start demo on page load
+  // Demo mode: auto-start and auto-navigate
   useEffect(() => {
-    if (!autoFillTriggered.current && certificates.length === 0) {
+    if (demoMode && !demoStarted.current) {
+      demoStarted.current = true;
+      setShowAddForm(true);
+      setTimeout(() => {
+        startAutoFill(true);
+      }, 500);
+    } else if (!demoMode && !autoFillTriggered.current && certificates.length === 0) {
+      // Normal auto-start demo on page load
       const timer = setTimeout(() => {
-        // Open form and start demo
         setShowAddForm(true);
         setTimeout(() => {
-          startAutoFill();
+          startAutoFill(false);
         }, 500);
       }, 800);
       return () => clearTimeout(timer);
     }
-  }, []);
+  }, [demoMode]);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
